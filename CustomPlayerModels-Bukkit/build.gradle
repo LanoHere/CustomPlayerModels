@@ -7,10 +7,13 @@ version = project.mod_version
 group = 'com.yourname.modid' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'CustomPlayerModels-Bukkit'
 
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 repositories {
     mavenCentral()
+    maven {
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
     maven {
         url "https://hub.spigotmc.org/nexus/content/repositories/snapshots"
     }
@@ -21,7 +24,9 @@ repositories {
 }
 
 dependencies {
-    compileOnly "org.spigotmc:spigot-api:1.21.8-R0.1-SNAPSHOT"
+    // Paper API (primary target: Paper/Purpur MC 26.1).
+    // Keep spigot-api snapshot url in repositories as fallback for pure-Spigot builds.
+    compileOnly "io.papermc.paper:paper-api:26.1-R0.1-SNAPSHOT"
     compileOnly "io.netty:netty-all:4.1.25.Final"
     compileOnly "com.mojang:brigadier:1.0.18"
     compileOnly "dev.jorel:commandapi-bukkit-core:9.4.1"
@@ -46,7 +51,7 @@ spigot {
         main 'com.tom.cpm.bukkit.CPMBukkitPlugin'
         description 'Customizable Player Models server-side plugin.'
         website 'https://github.com/tom5454/CustomPlayerModels'
-        apiVersion '1.13'
+        apiVersion '1.21'
         command {
         	named 'cpm'
             description 'Customizable Player Models command'

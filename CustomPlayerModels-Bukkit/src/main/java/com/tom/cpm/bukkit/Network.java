@@ -1,6 +1,5 @@
 package com.tom.cpm.bukkit;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -31,7 +30,6 @@ public class Network implements PluginMessageListener, Listener {
 	private final CPMBukkitPlugin plugin;
 	public NetHandler<String, Player, Meta> netHandler;
 
-	@SuppressWarnings("deprecation")
 	public Network(CPMBukkitPlugin plugin) {
 		this.plugin = plugin;
 		try {
@@ -45,7 +43,15 @@ public class Network implements PluginMessageListener, Listener {
 			netHandler.setGetPlayer(n -> n.owner);
 			netHandler.setGetPlayerId(Player::getEntityId);
 			netHandler.setGetOnlinePlayers(Bukkit::getOnlinePlayers);
-			netHandler.setKickPlayer((p, m) -> p.kickPlayer(m.<Object>remap().toString()));
+			netHandler.setKickPlayer((p, m) -> {
+				String msg = m.<Object>remap().toString();
+				try {
+					p.kick(net.kyori.adventure.text.Component.text(msg));
+				} catch (NoSuchMethodError | AbstractMethodError e) {
+					//noinspection deprecation
+					p.kickPlayer(msg);
+				}
+			});
 			boolean hasAttributes = false;
 			try {
 				Attribute.values();
@@ -62,7 +68,10 @@ public class Network implements PluginMessageListener, Listener {
 				if (fhasAttributes) {
 					u.health = (float) (t.getHealth() / t.getAttribute(AttributeScaler.MAX_HEALTH).getValue());
 				} else {
-					u.health = (float) (t.getHealth() / t.getMaxHealth());
+					// Attribute API is unavailable (very old server or class-not-found).
+					// Use Minecraft's vanilla default max health (20.0) so the ratio is at
+					// least meaningful; this branch is never reached on MC 26.1+.
+					u.health = (float) (t.getHealth() / 20.0);
 				}
 				u.air = Math.max(t.getRemainingAir() / (float) t.getMaximumAir(), 0);
 				u.hunger = t.getFoodLevel() / 20f;
@@ -112,12 +121,8 @@ public class Network implements PluginMessageListener, Listener {
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent evt) {
-		try {
-			Method addChn = evt.getPlayer().getClass().getMethod("addChannel", String.class);
-			netHandler.registerOut(c -> addChn.invoke(evt.getPlayer(), c));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		// addChannel via reflection is not needed on modern Bukkit/Paper (1.13+);
+		// channels registered through Messenger are automatically communicated to the client.
 		evt.getPlayer().setMetadata(PLAYER_DATA, new FixedMetadataValue(plugin, new Meta(evt.getPlayer())));
 		netHandler.onJoin(evt.getPlayer());
 	}
