@@ -4,7 +4,7 @@ description: Customizable Player Models server-side plugin.
 author: tom5454
 website: https://github.com/tom5454/CustomPlayerModels
 main: com.tom.cpm.bukkit.CPMBukkitPlugin
-api-version: "1.13"
+api-version: "1.21"
 commands:
   cpm:
     description: Customizable Player Models command
